@@ -168,4 +168,4 @@ Because some compilers don't support the `typeof` operator, which is used for st
 | get the number of items in `vec`            | `int num_items = vector_size(vec);`              | no                      |
 | get the amount of allocated memory in `vec` | `int alloc_amt = vector_get_alloc(vec);`         | no                      |
 | add `item` to the vector `vec`              | `type* temp = vector_add_asg(&vec, type);`       | yes                     |
-| insert `item` into `vec` at index `9`       | `type* temp = vector_insert_asg(&vec, type, 9);` |                         |
+| insert `item` into `vec` at index `9`       | `type* temp = vector_insert_asg(&vec, type, 9);` | yes                     |
