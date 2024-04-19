@@ -67,7 +67,7 @@ This works because these vectors are stored directly alongside special header in
 
 This design was inspired by anitrez's [Simple Dynamic Strings](https://github.com/antirez/sds/).
 
-This library uses the preprocessor to perform compile-time type checks. The type checks are done using C23's `typeof` operator, which was actually implemented in some compilers before C23 (such as GCC and Clang). [Older versions of MSVC](https://learn.microsoft.com/en-us/cpp/c-language/typeof-unqual-c?view=msvc-170#requirements) do not support the `typeof` operator. See [Missing typeof Reference Sheet](missing-typeof-reference-sheet) for info about vector usage when `typeof` is not present.
+This library uses the preprocessor to perform compile-time type checks. The type checks are done using C23's `typeof` operator, which was actually implemented in some compilers before C23 (such as GCC and Clang). [Older versions of MSVC](https://learn.microsoft.com/en-us/cpp/c-language/typeof-c?view=msvc-170#requirements) do not support the `typeof` operator. See [Missing typeof Reference Sheet](missing-typeof-reference-sheet) for info about vector usage when `typeof` is not present.
 
 If you're using this library in a C++ project, and `decltype` is supported, a macro substitute for `typeof` will automatically be applied.
 
