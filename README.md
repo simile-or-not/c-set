@@ -1,5 +1,5 @@
 # C Vector Library
-A simple vector library for C. This libary's vectors work in a similar manner to C++ vectors: they can store any type, their elements can be accessed via the `[]` operator, and elements may be added or removed with simple library calls.
+A simple vector library for C. This library's vectors work in a similar manner to C++ vectors: they can store any type, their elements can be accessed via the `[]` operator, and elements may be added or removed with simple library calls.
 
 You can easily create a vector like so:
 
@@ -23,19 +23,19 @@ struct foo* foo_vec = vector_create();
 A vector's elements can be accessed/modified using the `[]` operator:
 
 ```c
-char* vec_str = vector_create();
+char* char_vec = vector_create();
 
 // add an item
-vector_add(&vec_str, 'a');
+vector_add(&char_vec, 'a');
 
 // print the item from the vector
-printf("first item: %c\n", vec_str[0]);
+printf("first item: %c\n", char_vec[0]);
 ```
 
 Vectors require that their pointer type corresponds to the contents of the vector (e.g. `int*` for a vector containing `int`s); otherwise, you have to explicitly cast the vector pointer to the correct type when accessing elements or making library calls:
 
 ```c
-// recommened vector use
+// recommended vector use
 int* foo = vector_create();
 
 vector_add(&foo, 5);
@@ -49,7 +49,7 @@ vector bar = vector_create();
 
 vector_add(&(int*)bar, 3);
 
-((int*)bar)[0] = 5; // we have to cast to an int* so we can properly access
+((int*)bar)[0] = 5; // we have to cast to an int* so we can properly access vector elements
 ```
 Note: the `vector` type is just an alias for `void*` defined in `vec.h`.
 
@@ -67,9 +67,9 @@ This works because these vectors are stored directly alongside special header in
 
 This design was inspired by anitrez's [Simple Dynamic Strings](https://github.com/antirez/sds/).
 
-This library uses the preprocessor to perform compile-time type checks, which make sure the pointer type of a vector corresponds to the type of its contents. The type checks are done using GCC's `typeof` operator, which is only implemented in some compilers, such as Clang and GCC, and will not work under the Visual Studio C compiler.
+This library uses the preprocessor to perform compile-time type checks. The type checks are done using C23's `typeof` operator, which was actually implemented in some compilers before C23 (such as GCC and Clang). [Older versions of MSVC](https://learn.microsoft.com/en-us/cpp/c-language/typeof-unqual-c?view=msvc-170#requirements) do not support the `typeof` operator. See [Missing typeof Reference Sheet](missing-typeof-reference-sheet) for info about vector usage when `typeof` is not present.
 
-If you're using this library for a C++ project, you can swap each occurrence of `typeof` with `decltype`, which *is* standardized in C++.
+If you're using this library in a C++ project, and `decltype` is supported, a macro substitute for `typeof` will automatically be applied.
 
 # Usage
 
@@ -77,7 +77,7 @@ Just because these vectors can be accessed and modified like regular arrays does
 
 Because of the hidden header data, these vectors can only be properly freed by calling `vector_free(vec)`.
 
-Since the header data is stored in the same location as the the vector's elements, the entire vector might be moved to a new location when its size is changed. This means that the library calls that increase the vector's size need to take the address of the vector pointer, e.g `&vec`, so it can be reassigned. This obviously means that you can't reference the same vector in multiple places without encapsulating it in some kind of structure, which is likely your intention anyway.
+Since the header data is stored in the same location as the the vector's elements, the entire vector might be moved to a new location when its size is changed. This means the library calls that modify the vector's capacity need to take the address of the vector pointer, e.g `&vec`, so it can be reassigned. This obviously means that you can't have copies of the same vector pointer in multiple locations (unless the vector's capacity is constant), but this issue can be easily remedied by indirectly referencing the vector, either by referencing some kind of structure that contains the vector pointer, or by referencing the vector pointer itself.
 
 Here is an example using a function that reassigns the vector pointer:
 
@@ -88,7 +88,7 @@ int* baz = vector_create();
 vector_add(&baz, 5); // takes the address of the `int*` in case the pointer needs to be changed
 ```
 
-This is another similarity to the *Simple Dynamic Strings* library, which has function calls that are a little more clear in their reassignment, e.g. `s = sdscat(s,"foo")`, but this functionality would break the `vector_add` and `vector_insert` macros because they already expand to an assignment expression. The method these macros use does have the advantage of producing a compiler error when you omit the `&` (unless you're using the Visual Studio compiler), which means you're less likely to get a segfault as it forces reassignment on you.
+This is another similarity to *Simple Dynamic Strings*, which has library calls that are a little more clear in their reassignment, e.g. `s = sdscat(s,"foo")`, but this functionality would break the `vector_add` and `vector_insert` macros, which already expand to an assignment expression. If you're using a compiler that supports the `typeof` operator, the vector macros will perform compile-time checks that will produce an error when the vector pointer is used incorrectly.
 
 Some functions never move a vector to a new location, so they just take a regular vector pointer as an argument:
 
@@ -113,52 +113,20 @@ vec_float qux = vector_create();
 
 `vec.h` already includes an alias for `int*` and `char*` types (`vec_int` and `vec_char` respectively), but you can add as many as you want :)
 
-The *reccomended* way to differentiate between vectors and arrays is to simply name them differently, for example, an array of eggs could be named `eggs` while a vector of eggs could be named `egg_vec`.
-
-# Reference Sheet
-
-Here is a cheat sheet for this library's functions and macros:
-
-Some functions take a normal vector argument, e.g. `vec`, while other functions can change the vector's memory location and thus require the pointer address, e.g. `&vec`. You should get an error if you use the vector address incorrectly.
-
-| Action                                        | Code                                       | Changes vector address? |
-|-----------------------------------------------|--------------------------------------------|-------------------------|
-| create a vector                               | `type* vec_a = vector_create();`           | N/A                     |
-| free a vector                                 | `vector_free(vec_a);`                      | N/A                     |
-| add `item` to the vector `vec_a`              | `vector_add(&vec_a, item);`                | yes                     |
-| insert `item` into `vec_a` at index `9`       | `vector_insert(&vec_a, 9, item)`           | yes                     |
-| erase `4` items from `vec_a` at index `3`     | `vector_erase(&vec_a, 3, 4);`              | no (moves elements)     |
-| remove item at index `3` from `vec_a`         | `vector_remove(&vec_a, 3);`                | no (moves elements)     |
-| get the number of items in `vec_a`            | `int num_items = vector_size(vec_a);`      | no                      |
-| get the amount of allocated memory in `vec_a` | `int alloc_amt = vector_get_alloc(vec_a);` | no                      |
-
-# Visual Studio Reference Sheet
-
-Because the Visual Studio C compiler doesn't support the `typeof` operator, which is used for static type checks in the library's macros, you have to use a slightly different set of macros. Unfortunatley, this also means you won't get an error when passing incorrect types to these macros, so if you're getting segfaults, make sure you are properly using `vec` and `&vec` for their corresponding calls.
-
-| Action                                        | Code                                       | Changes vector address? |
-|-----------------------------------------------|--------------------------------------------|-------------------------|
-| create a vector                               | `type* vec_a = vector_create();`           | N/A                     |
-| free a vector                                 | `vector_free(vec_a);`                      | N/A                     |
-| add `item` to the vector `vec_a`              | `vector_add(&vec_a, type) = item;`         | yes                     |
-| insert `item` into `vec_a` at index `9`       | `vector_insert(&vec_a, type, 9) = item;`   | yes                     |
-| erase `4` items from `vec_a` at index `3`     | `vector_erase(&vec_a, type, 3, 4);`        | no (moves elements)     |
-| remove item at index `3` from `vec_a`         | `vector_remove(&vec_a, type, 3);`          | no (moves elements)     |
-| get the number of items in `vec_a`            | `int num_items = vector_size(vec_a);`      | no                      |
-| get the amount of allocated memory in `vec_a` | `int alloc_amt = vector_get_alloc(vec_a);` | no                      |
+The *recommended* way to differentiate between vectors and arrays is to simply name them differently, for example, an array of eggs could be named `eggs` while a vector of eggs could be named `egg_vec`.
 
 # What About Structures?
 
-If you have a vector storing some kind of structure, you can't initialize new elements of the vector like you would a variable, e.g. `{ a, b, c }`. To get around this, there's a set of special macros defined for both the Visual Studio compiler and compilers that support the `typeof` operator. These macros allow you to have more control over how you initialize a new element of a vector.
+If you have a vector storing some kind of structure, you can't initialize new elements of the vector like you would a variable, e.g. `{ a, b, c }`. To get around this, there's a set of special macros that allow for more control over element initialization.
 
-Here are some examples:
+Here is an example:
 
 ```c
 typedef struct { ... } foo;
 
 foo* foo_vec = vector_create();
 
-// the lifetime of temp is not guaranteed to be long; don't use this pointer after instantiation
+// the lifetime of temp is not guaranteed to be long; don't use this pointer after initialization
 foo* temp = vector_add_asg(&foo_vec);
 temp->a = 1;
 temp->b = 2;
@@ -166,16 +134,38 @@ temp->c = 3;
 temp = NULL; // stop using temp now that the element is initialized
 ```
 
-Here's a quick cheat sheet for these macros:
+# Reference Sheet
 
-| Action                                  | Code                                         |
-|-----------------------------------------|----------------------------------------------|
-| add `item` to the vector `vec_a`        | `type* temp = vector_add_asg(&vec_a);`       |
-| insert `item` into `vec_a` at index `9` | `type* temp = vector_insert_asg(&vec_a, 9);` |
+Here is a cheat sheet for this library's functions and macros:
 
-The corresponding Visual Studio macros:
+Some functions take a normal vector argument, e.g. `vec`, while other functions can change the vector's memory location and therefore require the address of the vector pointer, e.g. `&vec`. You should get a compile-time error if you use a vector pointer incorrectly.
 
-| Action                                  | Code                                               |
-|-----------------------------------------|----------------------------------------------------|
-| add `item` to the vector `vec_a`        | `type* temp = vector_add_asg(&vec_a, type);`       |
-| insert `item` into `vec_a` at index `9` | `type* temp = vector_insert_asg(&vec_a, type, 9);` |
+| Action                                      | Code                                       | Changes vector address? |
+|---------------------------------------------|--------------------------------------------|-------------------------|
+| create a vector                             | `type* vec = vector_create();`             | N/A                     |
+| free a vector                               | `vector_free(vec);`                        | N/A                     |
+| add `item` to the vector `vec`              | `vector_add(&vec, item);`                  | yes                     |
+| insert `item` into `vec` at index `9`       | `vector_insert(&vec, 9, item)`             | yes                     |
+| erase `4` items from `vec` at index `3`     | `vector_erase(&vec, 3, 4);`                | no (moves elements)     |
+| remove item at index `3` from `vec`         | `vector_remove(&vec, 3);`                  | no (moves elements)     |
+| get the number of items in `vec`            | `int num_items = vector_size(vec);`        | no                      |
+| get the number of bytes allocated for `vec` | `int alloc_amt = vector_get_alloc(vec);`   | no                      |
+| add `item` to the vector `vec`              | `type* temp = vector_add_asg(&vec);`       | yes                     |
+| insert `item` into `vec` at index `9`       | `type* temp = vector_insert_asg(&vec, 9);` | yes                     |
+
+# Missing typeof Reference Sheet
+
+Because some compilers don't support the `typeof` operator, which is used for static type checks in this library's macros, you have to use a slightly different set of macros. Unfortunately, this also means some errors will be missed at compile time, so if you're getting runtime errors, make sure you are properly using `vec` and `&vec` for their corresponding calls.
+
+| Action                                      | Code                                             | Changes vector address? |
+|---------------------------------------------|--------------------------------------------------|-------------------------|
+| create a vector                             | `type* vec = vector_create();`                   | N/A                     |
+| free a vector                               | `vector_free(vec);`                              | N/A                     |
+| add `item` to the vector `vec`              | `vector_add(&vec, type) = item;`                 | yes                     |
+| insert `item` into `vec` at index `9`       | `vector_insert(&vec, type, 9) = item;`           | yes                     |
+| erase `4` items from `vec` at index `3`     | `vector_erase(&vec, type, 3, 4);`                | no (moves elements)     |
+| remove item at index `3` from `vec`         | `vector_remove(&vec, type, 3);`                  | no (moves elements)     |
+| get the number of items in `vec`            | `int num_items = vector_size(vec);`              | no                      |
+| get the amount of allocated memory in `vec` | `int alloc_amt = vector_get_alloc(vec);`         | no                      |
+| add `item` to the vector `vec`              | `type* temp = vector_add_asg(&vec, type);`       | yes                     |
+| insert `item` into `vec` at index `9`       | `type* temp = vector_insert_asg(&vec, type, 9);` |                         |

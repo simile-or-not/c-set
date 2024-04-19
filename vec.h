@@ -7,6 +7,10 @@
 #ifndef vec_h
 #define vec_h
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -18,7 +22,13 @@ typedef unsigned char vec_type_t; // stores the number of bytes for a type
 typedef int* vec_int;
 typedef char* vec_char;
 
-#ifndef _MSC_VER
+// TODO: more rigorous check for typeof support with different compilers
+#if _MSC_VER == 0 || __STDC_VERSION__ >= 202311L || defined __cpp_decltype
+
+#ifdef __cpp_decltype
+#include <type_traits>
+#define typeof(T) std::remove_reference<std::add_lvalue_reference<decltype(T)>::type>::type
+#endif
 
 // shortcut defines
 
@@ -76,5 +86,10 @@ vector _vector_copy(vector vec, vec_type_t type_size);
 vec_size_t vector_size(vector vec);
 
 vec_size_t vector_get_alloc(vector vec);
+
+// closing bracket for extern "C"
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* vec_h */
