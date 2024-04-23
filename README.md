@@ -127,7 +127,7 @@ typedef struct { ... } foo;
 foo* foo_vec = vector_create();
 
 // the lifetime of temp is not guaranteed to be long; don't use this pointer after initialization
-foo* temp = vector_add_asg(&foo_vec);
+foo* temp = vector_add_dst(&foo_vec);
 temp->a = 1;
 temp->b = 2;
 temp->c = 3;
@@ -150,8 +150,8 @@ Some functions take a normal vector argument, e.g. `vec`, while other functions 
 | remove item at index `3` from `vec`     | `vector_remove(&vec, 3);`                  | no (moves elements)     |
 | get the number of items in `vec`        | `int size = vector_size(vec);`             | no                      |
 | get the storage capacity of `vec`       | `int capacity = vector_get_capacity(vec);` | no                      |
-| add `item` to the vector `vec`          | `type* temp = vector_add_asg(&vec);`       | yes                     |
-| insert `item` into `vec` at index `9`   | `type* temp = vector_insert_asg(&vec, 9);` | yes                     |
+| add `item` to the vector `vec`          | `type* temp = vector_add_dst(&vec);`       | yes                     |
+| insert `item` into `vec` at index `9`   | `type* temp = vector_insert_dst(&vec, 9);` | yes                     |
 
 # Missing typeof Reference Sheet
 
@@ -167,5 +167,5 @@ Because some compilers don't support the `typeof` operator, which is used for st
 | remove item at index `3` from `vec`     | `vector_remove(&vec, type, 3);`                  | no (moves elements)     |
 | get the number of items in `vec`        | `int size = vector_size(vec);`                   | no                      |
 | get the storage capacity of `vec`       | `int capacity = vector_get_capacity(vec);`       | no                      |
-| add `item` to the vector `vec`          | `type* temp = vector_add_asg(&vec, type);`       | yes                     |
-| insert `item` into `vec` at index `9`   | `type* temp = vector_insert_asg(&vec, type, 9);` | yes                     |
+| add `item` to the vector `vec`          | `type* temp = vector_add_dst(&vec, type);`       | yes                     |
+| insert `item` into `vec` at index `9`   | `type* temp = vector_insert_dst(&vec, type, 9);` | yes                     |
