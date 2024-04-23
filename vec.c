@@ -71,7 +71,7 @@ bool vector_has_space(vector_header* h)
 	return h->capacity - h->size > 0;
 }
 
-void* _vector_add(vector* vec_addr, vec_type_t type_size)
+void* _vector_add_dst(vector* vec_addr, vec_type_t type_size)
 {
 	vector_header* h = vector_get_header(*vec_addr);
 
@@ -84,7 +84,7 @@ void* _vector_add(vector* vec_addr, vec_type_t type_size)
 	return (void*)&h->data[type_size * h->size++];
 }
 
-void* _vector_insert(vector* vec_addr, vec_type_t type_size, vec_size_t pos)
+void* _vector_insert_dst(vector* vec_addr, vec_type_t type_size, vec_size_t pos)
 {
 	vector_header* h = vector_get_header(*vec_addr);
 
@@ -106,9 +106,9 @@ void* _vector_insert(vector* vec_addr, vec_type_t type_size, vec_size_t pos)
 	return &h->data[pos * type_size];
 }
 
-void _vector_erase(vector* vec_addr, vec_type_t type_size, vec_size_t pos, vec_size_t len)
+void _vector_erase(vector vec, vec_type_t type_size, vec_size_t pos, vec_size_t len)
 {
-	vector_header* h = vector_get_header(*vec_addr);
+	vector_header* h = vector_get_header(vec);
 	memmove(&h->data[pos * type_size],
 		&h->data[(pos + len) * type_size],
 		(h->size - pos - len) * type_size);
@@ -116,9 +116,9 @@ void _vector_erase(vector* vec_addr, vec_type_t type_size, vec_size_t pos, vec_s
 	h->size -= len;
 }
 
-void _vector_remove(vector* vec_addr, vec_type_t type_size, vec_size_t pos)
+void _vector_remove(vector vec, vec_type_t type_size, vec_size_t pos)
 {
-	_vector_erase(vec_addr, type_size, pos, 1);
+	_vector_erase(vec, type_size, pos, 1);
 }
 
 void vector_pop(vector vec) { --vector_get_header(vec)->size; }

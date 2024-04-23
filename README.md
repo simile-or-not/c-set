@@ -99,6 +99,8 @@ int* age_vec = vector_create();
 int num_ages = vector_size(age_vec); // just pass the `int*` without taking its address
 ```
 
+If the vector parameter for a function or macro is named `vec`, you don't need to take the address, but if the parameter is named `vec_addr`, then you do need to take it.
+
 # Best Practices
 
 Because of the differences between regular arrays and vectors, it's probably a good idea to try to distinguish them from one another.
@@ -136,9 +138,9 @@ temp = NULL; // stop using temp now that the element is initialized
 
 # Reference Sheet
 
-Here is a cheat sheet for this library's functions and macros:
+Below is a cheat sheet for this library's functions and macros.
 
-Some functions take a normal vector argument, e.g. `vec`, while other functions can change the vector's memory location and therefore require the address of the vector pointer, e.g. `&vec`. You should get a compile-time error if you use a vector pointer incorrectly.
+Some functions and macros take a normal vector argument, e.g. `vec`, while others can change the vector's memory location and therefore require the address of the vector pointer, e.g. `&vec`. You should get a compile-time error if you use a vector pointer incorrectly. Parameter names will also indicate whether or not to take the address of the vector pointer.
 
 | Action                                  | Code                                       | Changes vector address? |
 |-----------------------------------------|--------------------------------------------|-------------------------|
@@ -146,8 +148,8 @@ Some functions take a normal vector argument, e.g. `vec`, while other functions 
 | free a vector                           | `vector_free(vec);`                        | N/A                     |
 | add `item` to the vector `vec`          | `vector_add(&vec, item);`                  | yes                     |
 | insert `item` into `vec` at index `9`   | `vector_insert(&vec, 9, item)`             | yes                     |
-| erase `4` items from `vec` at index `3` | `vector_erase(&vec, 3, 4);`                | no (moves elements)     |
-| remove item at index `3` from `vec`     | `vector_remove(&vec, 3);`                  | no (moves elements)     |
+| erase `4` items from `vec` at index `3` | `vector_erase(vec, 3, 4);`                 | no (moves elements)     |
+| remove item at index `3` from `vec`     | `vector_remove(vec, 3);`                   | no (moves elements)     |
 | get the number of items in `vec`        | `int size = vector_size(vec);`             | no                      |
 | get the storage capacity of `vec`       | `int capacity = vector_get_capacity(vec);` | no                      |
 | add `item` to the vector `vec`          | `type* temp = vector_add_dst(&vec);`       | yes                     |
@@ -156,18 +158,13 @@ Some functions take a normal vector argument, e.g. `vec`, while other functions 
 
 # Missing typeof Reference Sheet
 
-Because some compilers don't support the `typeof` operator, which is used for static type checks in this library's macros, you have to use a slightly different set of macros. Unfortunately, this also means some errors will be missed at compile time, so if you're getting runtime errors, make sure you are properly using `vec` and `&vec` for their corresponding calls.
+Because some compilers don't support the `typeof` operator, which is used for static type checks in some of this library's macros, you have to use a slightly different set of macros. Unfortunately, this also means some errors will be missed at compile time, so if you're getting runtime errors, make sure you are properly using `vec` and `&vec` for their corresponding calls.
 
 | Action                                  | Code                                             | Changes vector address? |
 |-----------------------------------------|--------------------------------------------------|-------------------------|
-| create a vector                         | `type* vec = vector_create();`                   | N/A                     |
-| free a vector                           | `vector_free(vec);`                              | N/A                     |
 | add `item` to the vector `vec`          | `vector_add(&vec, type) = item;`                 | yes                     |
 | insert `item` into `vec` at index `9`   | `vector_insert(&vec, type, 9) = item;`           | yes                     |
-| erase `4` items from `vec` at index `3` | `vector_erase(&vec, type, 3, 4);`                | no (moves elements)     |
-| remove item at index `3` from `vec`     | `vector_remove(&vec, type, 3);`                  | no (moves elements)     |
-| get the number of items in `vec`        | `int size = vector_size(vec);`                   | no                      |
-| get the storage capacity of `vec`       | `int capacity = vector_get_capacity(vec);`       | no                      |
+| erase `4` items from `vec` at index `3` | `vector_erase(vec, type, 3, 4);`                 | no (moves elements)     |
+| remove item at index `3` from `vec`     | `vector_remove(vec, type, 3);`                   | no (moves elements)     |
 | add `item` to the vector `vec`          | `type* temp = vector_add_dst(&vec, type);`       | yes                     |
 | insert `item` into `vec` at index `9`   | `type* temp = vector_insert_dst(&vec, type, 9);` | yes                     |
-| reserve space for 255 items in `vec`    | `vector_reserve(&vec, 255);`                     | yes                     |

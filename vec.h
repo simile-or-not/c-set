@@ -63,11 +63,11 @@ typedef char* vec_char;
 // vec_addr is a vector* (aka type**)
 #define vector_add_dst(vec_addr)\
 	((typeof(*vec_addr))(\
-	    _vector_add((vector*)vec_addr, sizeof(**vec_addr))\
+	    _vector_add_dst((vector*)vec_addr, sizeof(**vec_addr))\
 	))
 #define vector_insert_dst(vec_addr, pos)\
 	((typeof(*vec_addr))(\
-	    _vector_insert((vector*)vec_addr, sizeof(**vec_addr), pos)))
+	    _vector_insert_dst((vector*)vec_addr, sizeof(**vec_addr), pos)))
 
 #define vector_add(vec_addr, value)\
 	(*vector_add_dst(vec_addr) = value)
@@ -77,9 +77,9 @@ typedef char* vec_char;
 #else
 
 #define vector_add_dst(vec_addr, type)\
-	((type*)_vector_add((vector*)vec_addr, sizeof(type)))
+	((type*)_vector_add_dst((vector*)vec_addr, sizeof(type)))
 #define vector_insert_dst(vec_addr, type, pos)\
-	((type*)_vector_insert((vector*)vec_addr, sizeof(type), pos))
+	((type*)_vector_insert_dst((vector*)vec_addr, sizeof(type), pos))
 
 #define vector_add(vec_addr, type, value)\
 	(*vector_add_dst(vec_addr, type) = value)
@@ -90,9 +90,9 @@ typedef char* vec_char;
 
 // vec is a vector (aka type*)
 #define vector_erase(vec, pos, len)\
-	(_vector_erase((vector*)vec, sizeof(*vec), pos, len))
+	(_vector_erase((vector)vec, sizeof(*vec), pos, len))
 #define vector_remove(vec, pos)\
-	(_vector_remove((vector*)vec, sizeof(*vec), pos))
+	(_vector_remove((vector)vec, sizeof(*vec), pos))
 
 #define vector_reserve(vec_addr, capacity)\
 	(_vector_reserve(vec_addr, sizeof(**vec_addr), capacity))
@@ -104,14 +104,13 @@ vector vector_create(void);
 
 void vector_free(vector vec);
 
-void* _vector_add(vector* vec_addr, vec_type_t type_size);
+void* _vector_add_dst(vector* vec_addr, vec_type_t type_size);
 
-void* _vector_insert(vector* vec_addr, vec_type_t type_size, vec_size_t pos);
+void* _vector_insert_dst(vector* vec_addr, vec_type_t type_size, vec_size_t pos);
 
-void _vector_erase(vector* vec_addr, vec_type_t type_size, vec_size_t pos,
-		   vec_size_t len);
+void _vector_erase(vector vec_addr, vec_type_t type_size, vec_size_t pos, vec_size_t len);
 
-void _vector_remove(vector* vec_addr, vec_type_t type_size, vec_size_t pos);
+void _vector_remove(vector vec_addr, vec_type_t type_size, vec_size_t pos);
 
 void vector_pop(vector vec);
 
