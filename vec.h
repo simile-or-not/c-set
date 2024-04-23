@@ -52,9 +52,6 @@ typedef size_t vec_size_t;
 // number of bytes for a type
 typedef size_t vec_type_t;
 
-typedef int* vec_int;
-typedef char* vec_char;
-
 // TODO: more rigorous check for typeof support with different compilers
 #if _MSC_VER == 0 || __STDC_VERSION__ >= 202311L || defined __cpp_decltype
 
