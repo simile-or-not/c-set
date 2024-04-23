@@ -152,6 +152,7 @@ Some functions take a normal vector argument, e.g. `vec`, while other functions 
 | get the storage capacity of `vec`       | `int capacity = vector_get_capacity(vec);` | no                      |
 | add `item` to the vector `vec`          | `type* temp = vector_add_dst(&vec);`       | yes                     |
 | insert `item` into `vec` at index `9`   | `type* temp = vector_insert_dst(&vec, 9);` | yes                     |
+| reserve space for 255 items in `vec`    | `vector_reserve(&vec, 255);`               | yes                     |
 
 # Missing typeof Reference Sheet
 
@@ -169,3 +170,4 @@ Because some compilers don't support the `typeof` operator, which is used for st
 | get the storage capacity of `vec`       | `int capacity = vector_get_capacity(vec);`       | no                      |
 | add `item` to the vector `vec`          | `type* temp = vector_add_dst(&vec, type);`       | yes                     |
 | insert `item` into `vec` at index `9`   | `type* temp = vector_insert_dst(&vec, type, 9);` | yes                     |
+| reserve space for 255 items in `vec`    | `vector_reserve(&vec, 255);`                     | yes                     |

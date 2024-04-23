@@ -33,97 +33,87 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vec.h"
 #include <string.h>
 
-typedef struct vector_data vector_data;
-
-struct vector_data
+typedef struct
 {
 	vec_size_t size;
 	vec_size_t capacity;
 	unsigned char data[]; 
-};
+} vector_header;
 
-vector_data* vector_alloc(vec_size_t capacity, vec_size_t size)
-{
-	vector_data* v_data = (vector_data*)malloc(sizeof(vector_data) + capacity * size);
-	v_data->capacity = capacity;
-	
-	return v_data;
-}
-
-vector_data* vector_get_data(vector vec) { return &((vector_data*)vec)[-1]; }
+vector_header* vector_get_header(vector vec) { return &((vector_header*)vec)[-1]; }
 
 vector vector_create(void)
 {
-	vector_data* v = (vector_data*)malloc(sizeof(vector_data));
-	v->capacity = 0;
-	v->size = 0;
+	vector_header* h = (vector_header*)malloc(sizeof(vector_header));
+	h->capacity = 0;
+	h->size = 0;
 
-	return &v->data;
+	return &h->data;
 }
 
-void vector_free(vector vec) { free(vector_get_data(vec)); }
+void vector_free(vector vec) { free(vector_get_header(vec)); }
 
-vec_size_t vector_size(vector vec) { return vector_get_data(vec)->size; }
+vec_size_t vector_size(vector vec) { return vector_get_header(vec)->size; }
 
-vec_size_t vector_capacity(vector vec) { return vector_get_data(vec)->capacity; }
+vec_size_t vector_capacity(vector vec) { return vector_get_header(vec)->capacity; }
 
-vector_data* vector_realloc(vector_data* v_data, vec_type_t type_size)
+vector_header* vector_realloc(vector_header* h, vec_type_t type_size)
 {
-	vec_size_t new_alloc = (v_data->capacity == 0) ? 1 : v_data->capacity * 2;
-	vector_data* new_v_data = (vector_data*)realloc(v_data, sizeof(vector_data) + new_alloc * type_size);
-	new_v_data->capacity = new_alloc;
+	vec_size_t new_capacity = (h->capacity == 0) ? 1 : h->capacity * 2;
+	vector_header* new_h = (vector_header*)realloc(h, sizeof(vector_header) + new_capacity * type_size);
+	new_h->capacity = new_capacity;
 
-	return new_v_data;
+	return new_h;
 }
 
-bool vector_has_space(vector_data* v_data)
+bool vector_has_space(vector_header* h)
 {
-	return v_data->capacity - v_data->size > 0;
+	return h->capacity - h->size > 0;
 }
 
 void* _vector_add(vector* vec_addr, vec_type_t type_size)
 {
-	vector_data* v_data = vector_get_data(*vec_addr);
+	vector_header* h = vector_get_header(*vec_addr);
 
-	if (!vector_has_space(v_data))
+	if (!vector_has_space(h))
 	{
-		v_data = vector_realloc(v_data, type_size);
-		*vec_addr = v_data->data;
+		h = vector_realloc(h, type_size);
+		*vec_addr = h->data;
 	}
 
-	return (void*)&v_data->data[type_size * v_data->size++];
+	return (void*)&h->data[type_size * h->size++];
 }
 
 void* _vector_insert(vector* vec_addr, vec_type_t type_size, vec_size_t pos)
 {
-	vector_data* v_data = vector_get_data(*vec_addr);
+	vector_header* h = vector_get_header(*vec_addr);
 
-	vec_size_t new_length = v_data->size + 1;
+	vec_size_t new_length = h->size + 1;
 
 	// make sure there is enough room for the new element
-	if (!vector_has_space(v_data))
+	if (!vector_has_space(h))
 	{
-		v_data = vector_realloc(v_data, type_size);
-		*vec_addr = v_data->data;
+		h = vector_realloc(h, type_size);
+		*vec_addr = h->data;
 	}
 	// move trailing elements
-	memmove(&v_data->data[(pos + 1) * type_size],
-		&v_data->data[pos * type_size],
-		(v_data->size - pos) * type_size);
+	memmove(&h->data[(pos + 1) * type_size],
+		&h->data[pos * type_size],
+		(h->size - pos) * type_size);
 
-	v_data->size = new_length;
+	h->size = new_length;
 
-	return &v_data->data[pos * type_size];
+	return &h->data[pos * type_size];
 }
 
 void _vector_erase(vector* vec_addr, vec_type_t type_size, vec_size_t pos, vec_size_t len)
 {
-	vector_data* v_data = vector_get_data(*vec_addr);
-	memmove(&v_data->data[pos * type_size],
-		&v_data->data[(pos + len) * type_size],
-		(v_data->size - pos - len) * type_size);
+	vector_header* h = vector_get_header(*vec_addr);
+	memmove(&h->data[pos * type_size],
+		&h->data[(pos + len) * type_size],
+		(h->size - pos - len) * type_size);
 
-	v_data->size -= len;
+	h->size -= len;
 }
 
 void _vector_remove(vector* vec_addr, vec_type_t type_size, vec_size_t pos)
@@ -131,14 +121,27 @@ void _vector_remove(vector* vec_addr, vec_type_t type_size, vec_size_t pos)
 	_vector_erase(vec_addr, type_size, pos, 1);
 }
 
-void vector_pop(vector vec) { --vector_get_data(vec)->size; }
+void vector_pop(vector vec) { --vector_get_header(vec)->size; }
+
+void _vector_reserve(vector* vec_addr, vec_type_t type_size, vec_size_t capacity)
+{
+	vector_header* h = vector_get_header(*vec_addr);
+	if (h->capacity >= capacity)
+	{
+		return;
+	}
+
+	h = (vector_header*)realloc(h, sizeof(vector_header) + capacity * type_size);
+	h->capacity = capacity;
+	*vec_addr = &h->data;
+}
 
 vector _vector_copy(vector vec, vec_type_t type_size)
 {
-	vector_data* vec_data = vector_get_data(vec);
-	size_t alloc_size = sizeof(vector_data) + vec_data->size * type_size;
-	vector_data* v = (vector_data*)malloc(alloc_size);
-	memcpy(v, vec_data, alloc_size);
+	vector_header* vec_data = vector_get_header(vec);
+	size_t alloc_size = sizeof(vector_header) + vec_data->size * type_size;
+	vector_header* h = (vector_header*)malloc(alloc_size);
+	memcpy(h, vec_data, alloc_size);
 
-	return (void*)&v->data;
+	return (void*)&h->data;
 }

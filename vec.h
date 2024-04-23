@@ -94,6 +94,9 @@ typedef char* vec_char;
 #define vector_remove(vec, pos)\
 	(_vector_remove((vector*)vec, sizeof(*vec), pos))
 
+#define vector_reserve(vec_addr, capacity)\
+	(_vector_reserve(vec_addr, sizeof(**vec_addr), capacity))
+
 #define vector_copy(vec)\
 	(_vector_copy((vector*)vec, sizeof(*vec)))
 
@@ -101,9 +104,9 @@ vector vector_create(void);
 
 void vector_free(vector vec);
 
-vector _vector_add(vector* vec_addr, vec_type_t type_size);
+void* _vector_add(vector* vec_addr, vec_type_t type_size);
 
-vector _vector_insert(vector* vec_addr, vec_type_t type_size, vec_size_t pos);
+void* _vector_insert(vector* vec_addr, vec_type_t type_size, vec_size_t pos);
 
 void _vector_erase(vector* vec_addr, vec_type_t type_size, vec_size_t pos,
 		   vec_size_t len);
@@ -111,6 +114,8 @@ void _vector_erase(vector* vec_addr, vec_type_t type_size, vec_size_t pos,
 void _vector_remove(vector* vec_addr, vec_type_t type_size, vec_size_t pos);
 
 void vector_pop(vector vec);
+
+void _vector_reserve(vector* vec_addr, vec_type_t type_size, vec_size_t capacity);
 
 vector _vector_copy(vector vec, vec_type_t type_size);
 
