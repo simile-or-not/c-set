@@ -81,7 +81,7 @@ void* _vector_add_dst(vector* vec_addr, vec_type_t type_size)
 		*vec_addr = h->data;
 	}
 
-	return (void*)&h->data[type_size * h->size++];
+	return &h->data[type_size * h->size++];
 }
 
 void* _vector_insert_dst(vector* vec_addr, vec_type_t type_size, vec_size_t pos)
@@ -138,10 +138,11 @@ void _vector_reserve(vector* vec_addr, vec_type_t type_size, vec_size_t capacity
 
 vector _vector_copy(vector vec, vec_type_t type_size)
 {
-	vector_header* vec_data = vector_get_header(vec);
-	size_t alloc_size = sizeof(vector_header) + vec_data->size * type_size;
-	vector_header* h = (vector_header*)malloc(alloc_size);
-	memcpy(h, vec_data, alloc_size);
+	vector_header* h = vector_get_header(vec);
+	size_t alloc_size = sizeof(vector_header) + h->size * type_size;
+	vector_header* copy_h = (vector_header*)malloc(alloc_size);
+	memcpy(copy_h, h, alloc_size);
+	copy_h->capacity = copy_h->size;
 
-	return (void*)&h->data;
+	return &copy_h->data;
 }

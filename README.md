@@ -155,6 +155,7 @@ Some functions and macros take a normal vector argument, e.g. `vec`, while other
 | add `item` to the vector `vec`          | `type* temp = vector_add_dst(&vec);`       | yes                     |
 | insert `item` into `vec` at index `9`   | `type* temp = vector_insert_dst(&vec, 9);` | yes                     |
 | reserve space for 255 items in `vec`    | `vector_reserve(&vec, 255);`               | yes                     |
+| make a copy of `vec`                    | `type* vec_copy = vector_copy(vec);`       | no                      |
 
 # Missing typeof Reference Sheet
 

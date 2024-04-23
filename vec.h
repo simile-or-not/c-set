@@ -33,6 +33,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef vec_h
 #define vec_h
 
+#ifdef __cpp_decltype
+#include <type_traits>
+#define typeof(T) std::remove_reference<std::add_lvalue_reference<decltype(T)>::type>::type
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,11 +57,6 @@ typedef char* vec_char;
 
 // TODO: more rigorous check for typeof support with different compilers
 #if _MSC_VER == 0 || __STDC_VERSION__ >= 202311L || defined __cpp_decltype
-
-#ifdef __cpp_decltype
-#include <type_traits>
-#define typeof(T) std::remove_reference<std::add_lvalue_reference<decltype(T)>::type>::type
-#endif
 
 // shortcut defines
 
@@ -95,10 +95,10 @@ typedef char* vec_char;
 	(_vector_remove((vector)vec, sizeof(*vec), pos))
 
 #define vector_reserve(vec_addr, capacity)\
-	(_vector_reserve(vec_addr, sizeof(**vec_addr), capacity))
+	(_vector_reserve((vector*)vec_addr, sizeof(**vec_addr), capacity))
 
 #define vector_copy(vec)\
-	(_vector_copy((vector*)vec, sizeof(*vec)))
+	(_vector_copy((vector)vec, sizeof(*vec)))
 
 vector vector_create(void);
 
