@@ -20,7 +20,7 @@ int* int_vec = vector_create();
 struct foo* foo_vec = vector_create();
 ```
 
-A vector's elements can be accessed/modified using the `[]` operator:
+A vector's elements can be accessed using the `[]` operator:
 
 ```c
 char* char_vec = vector_create();
@@ -112,8 +112,6 @@ typedef float* vec_float; // vector alias for float
 
 vec_float qux = vector_create();
 ```
-
-`vec.h` already includes an alias for `int*` and `char*` types (`vec_int` and `vec_char` respectively), but you can add as many as you want :)
 
 The *recommended* way to differentiate between vectors and arrays is to simply name them differently, for example, an array of eggs could be named `eggs` while a vector of eggs could be named `egg_vec`.
 
