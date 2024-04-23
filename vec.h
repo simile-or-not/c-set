@@ -45,7 +45,7 @@ typedef void* vector;
 // number of elements in a vector
 typedef size_t vec_size_t;
 // number of bytes for a type
-typedef unsigned char vec_type_t;
+typedef size_t vec_type_t;
 
 typedef int* vec_int;
 typedef char* vec_char;
