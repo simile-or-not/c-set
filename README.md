@@ -1,5 +1,5 @@
-# C Vector Library
-A simple vector library for C. This library's vectors work in a similar manner to C++ vectors: they can store any type, their elements can be accessed via the `[]` operator, and elements may be added or removed with simple library calls.
+# C Set Library
+A simple set library for **C**. This library's vectors work in a similar manner to C++ vectors: they can store any type, their elements can be accessed via the `[]` operator, and elements may be added or removed with simple library calls.
 
 You can easily create a vector like so:
 

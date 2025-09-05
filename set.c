@@ -2,6 +2,7 @@
 BSD 3-Clause License
 
 Copyright (c) 2024, Mashpoe
+Copyright (c) 2025, Simile (or not?)
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -32,11 +33,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "set.h"
 #include <string.h>
+#include <stdint.h>
 
 typedef struct {
 	set_size_t size;
 	set_size_t capacity;
-	unsigned char data[]; 
+	unsigned char data[];
 } set_header;
 
 set_header* set_get_header(set st) { return &((set_header*)st)[-1]; }
@@ -67,11 +69,20 @@ bool set_has_space(set_header* h) {
 	return h->capacity - h->size > 0;
 }
 
+#define set_contains(set_addr, value) ({ \
+	set_header* h = set_get_header(*set_addr); \
+	for (int i = 0; i != set_size(&h->data); i++) { \
+	    if ((&h->data)[i] == value) { \
+                return true; \
+            } \
+	} \
+	return false; \
+})
+
 void* _set_add_dst(set* set_addr, set_type_t type_size) {
 	set_header* h = set_get_header(*set_addr);
 
-	if (!set_has_space(h))
-	{
+	if (!set_has_space(h)) {
 		h = set_realloc(h, type_size);
 		*set_addr = h->data;
 	}
@@ -85,8 +96,7 @@ void* _set_insert_dst(set* set_addr, set_type_t type_size, set_size_t pos) {
 	set_size_t new_length = h->size + 1;
 
 	// make sure there is enough room for the new element
-	if (!set_has_space(h))
-	{
+	if (!set_has_space(h)) {
 		h = set_realloc(h, type_size);
 		*set_addr = h->data;
 	}
@@ -117,8 +127,7 @@ void set_pop(set st) { --set_get_header(st)->size; }
 
 void _set_reserve(set* set_addr, set_type_t type_size, set_size_t capacity) {
 	set_header* h = set_get_header(*set_addr);
-	if (h->capacity >= capacity)
-	{
+	if (h->capacity >= capacity) {
 		return;
 	}
 

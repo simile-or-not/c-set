@@ -2,6 +2,7 @@
 BSD 3-Clause License
 
 Copyright (c) 2024, Mashpoe
+Copyright (c) 2025, Simile (or not?)
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
