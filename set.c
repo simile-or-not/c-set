@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "set.h"
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
 
 typedef struct {
 	set_size_t size;
@@ -69,15 +70,16 @@ bool set_has_space(set_header* h) {
 	return h->capacity - h->size > 0;
 }
 
-#define set_contains(set_addr, value) ({ \
-	set_header* h = set_get_header(*set_addr); \
-	for (int i = 0; i != set_size(&h->data); i++) { \
-	    if ((&h->data)[i] == value) { \
-                return true; \
-            } \
-	} \
-	return false; \
-})
+bool set_contains(set* set_addr, unsigned char value) {
+        set_header* h = set_get_header(*set_addr);
+        for (int i = 0; i != set_size(&h->data); i++) {
+                if (h->data[i] == value) {
+                        return true;
+                }
+                //printf("%hhu %hhu\n", h->data[i], value);
+        }
+        return false;
+}
 
 void* _set_add_dst(set* set_addr, set_type_t type_size) {
 	set_header* h = set_get_header(*set_addr);

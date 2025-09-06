@@ -52,8 +52,6 @@ typedef size_t set_size_t;
 // number of bytes for a type
 typedef size_t set_type_t;
 
-#define set_contains(set_addr, value)
-
 // TODO: more rigorous check for typeof support with different compilers
 #if _MSC_VER == 0 || __STDC_VERSION__ >= 202311L || defined __cpp_decltype
 
@@ -69,12 +67,12 @@ typedef size_t set_type_t;
 	    _set_insert_dst((set*)set_addr, sizeof(**set_addr), pos)))
 
 #define set_add(set_addr, value)\
-        if (!set_contains(set_addr, value) { \
-	    (*set_add_dst(set_addr) = value) \
+        if (!set_contains((set*)set_addr, (unsigned char)value)) { \
+	    (*set_add_dst(set_addr) = value); \
 	}
 #define set_insert(set_addr, pos, value)\
-        if (!set_contains(set_addr, value) { \
-	    (*set_insert_dst(set_addr, pos) = value) \
+        if (!set_contains((set*)set_addr, (unsigned char)value)) { \
+	    (*set_insert_dst(set_addr, pos) = value); \
 	}
 
 #else
@@ -85,12 +83,12 @@ typedef size_t set_type_t;
 	((type*)_set_insert_dst((set*)set_addr, sizeof(type), pos))
 
 #define set_add(set_addr, type, value)\
-        if (!set_contains(set_addr, value) { \
-	    (*set_add_dst(set_addr, type) = value) \
+        if (!set_contains((set*)set_addr, (unsigned char)value)) { \
+	    (*set_add_dst(set_addr, type) = value); \
 	}
 #define set_insert(set_addr, type, pos, value)\
-        if (!set_contains(set_addr, value) { \
-	    (*set_insert_dst(set_addr, type, pos) = value) \
+        if (!set_contains((set*)set_addr, (unsigned char)value)) { \
+	    (*set_insert_dst(set_addr, type, pos) = value); \
 	}
 
 #endif
@@ -128,6 +126,8 @@ set _set_copy(set st, set_type_t type_size);
 set_size_t set_size(set st);
 
 set_size_t set_capacity(set st);
+
+bool set_contains(set* set_addr, unsigned char value);
 
 // closing bracket for extern "C"
 #ifdef __cplusplus
