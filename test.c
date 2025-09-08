@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "set.h"
+#include <stdint.h>
 
 int main() {
 	int* aaa = set_create();

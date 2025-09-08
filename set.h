@@ -44,6 +44,7 @@ extern "C" {
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 // generic type for internal use
 typedef void* set;
@@ -52,44 +53,62 @@ typedef size_t set_size_t;
 // number of bytes for a type
 typedef size_t set_type_t;
 
+#ifdef __LP64__
+typedef struct {
+        bool code;
+        uint64_t index;
+} pack;
+#else
+typedef struct {
+        bool code;
+        uint32_t index;
+} pack;
+#endif
+
 // TODO: more rigorous check for typeof support with different compilers
 #if _MSC_VER == 0 || __STDC_VERSION__ >= 202311L || defined __cpp_decltype
 
 // shortcut defines
 
 // set_addr is a set* (aka type**)
-#define set_add_dst(set_addr)\
+/*#define set_add_dst(set_addr)\
 	((typeof(*set_addr))(\
 	    _set_add_dst((set*)set_addr, sizeof(**set_addr))\
-	))
+	))*/
 #define set_insert_dst(set_addr, pos)\
 	((typeof(*set_addr))(\
 	    _set_insert_dst((set*)set_addr, sizeof(**set_addr), pos)))
 
-#define set_add(set_addr, value)\
-        if (!set_contains((set*)set_addr, (unsigned char)value)) { \
-	    (*set_add_dst(set_addr) = value); \
-	}
-#define set_insert(set_addr, pos, value)\
+#define set_add(set_addr, value) { \
+        pack answer = set_contains((set*)set_addr, (unsigned char)value); \
+        if (!answer.code) { \
+	    (*set_insert_dst(set_addr, answer.index) = value); \
+	    (_hash_add((set*)set_addr, value, answer.index)); \
+	} \
+}
+/*#define set_insert(set_addr, pos, value)\
         if (!set_contains((set*)set_addr, (unsigned char)value)) { \
 	    (*set_insert_dst(set_addr, pos) = value); \
-	}
+	}*/
 
 #else
 
-#define set_add_dst(set_addr, type)\
-	((type*)_set_add_dst((set*)set_addr, sizeof(type)))
+/*#define set_add_dst(set_addr, type)\
+	((type*)_set_add_dst((set*)set_addr, sizeof(type)))*/
 #define set_insert_dst(set_addr, type, pos)\
 	((type*)_set_insert_dst((set*)set_addr, sizeof(type), pos))
 
-#define set_add(set_addr, type, value)\
-        if (!set_contains((set*)set_addr, (unsigned char)value)) { \
-	    (*set_add_dst(set_addr, type) = value); \
-	}
-#define set_insert(set_addr, type, pos, value)\
+#define set_add(set_addr, type, value) { \
+            pack answer = set_contains((set*)set_addr, (unsigned char)value); \
+            if (!answer.code) { \
+	        (*set_insert_dst(set_addr, type, answer.index) = value); \
+	        (_hash_add((set*)set_addr, value, answer.index)); \
+	    } \
+}
+/*#define set_insert(set_addr, type, pos, value)\
         if (!set_contains((set*)set_addr, (unsigned char)value)) { \
 	    (*set_insert_dst(set_addr, type, pos) = value); \
-	}
+	}*/
 
 #endif
 
@@ -117,6 +136,8 @@ void _set_erase(set set_addr, set_type_t type_size, set_size_t pos, set_size_t l
 
 void _set_remove(set set_addr, set_type_t type_size, set_size_t pos);
 
+void _hash_add(set* set_addr, unsigned char value, set_size_t pos);
+
 void set_pop(set st);
 
 void _set_reserve(set* set_addr, set_type_t type_size, set_size_t capacity);
@@ -127,7 +148,7 @@ set_size_t set_size(set st);
 
 set_size_t set_capacity(set st);
 
-bool set_contains(set* set_addr, unsigned char value);
+pack set_contains(set* set_addr, unsigned char value);
 
 // closing bracket for extern "C"
 #ifdef __cplusplus

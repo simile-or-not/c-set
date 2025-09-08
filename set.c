@@ -33,14 +33,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "set.h"
 #include <string.h>
-#include <stdint.h>
 #include <stdio.h>
 
 typedef struct {
 	set_size_t size;
 	set_size_t capacity;
+	#ifdef __LP64__
+	uint64_t* _hash;
+	#else
+	uint32_t* _hash;
+	#endif
 	unsigned char data[];
 } set_header;
+
+#ifdef __LP64__
+uint64_t _default_hash(unsigned char *value);
+pack binsearch_array(set_header* h, uint64_t value);
+#else
+uint32_t _default_hash(unsigned char *value);
+pack binsearch_array(set_header* h, uint32_t value);
+#endif
 
 set_header* set_get_header(set st) { return &((set_header*)st)[-1]; }
 
@@ -48,7 +60,8 @@ set set_create(void) {
 	set_header* h = (set_header*)malloc(sizeof(set_header));
 	h->capacity = 0;
 	h->size = 0;
-
+        h->_hash = malloc(0 * sizeof(uint64_t));
+        
 	return &h->data;
 }
 
@@ -59,10 +72,32 @@ set_size_t set_size(set st) { return set_get_header(st)->size; }
 set_size_t set_capacity(set st) { return set_get_header(st)->capacity; }
 
 set_header* set_realloc(set_header* h, set_type_t type_size) {
+        set_size_t old_capacity = h->capacity;
+        #ifdef __LP64__
+        uint64_t *old_hash = malloc(old_capacity * sizeof(uint64_t));
+        memcpy(old_hash, h->_hash, old_capacity * sizeof(uint64_t));
+        #else
+        uint32_t *old_hash = malloc(old_capacity * sizeof(uint32_t));
+        memcpy(old_hash, h->_hash, old_capacity * sizeof(uint32_t));
+        #endif
+        set_size_t old_size = h->size;
 	set_size_t new_capacity = (h->capacity == 0) ? 1 : h->capacity * 2;
 	set_header* new_h = (set_header*)realloc(h, sizeof(set_header) + new_capacity * type_size);
 	new_h->capacity = new_capacity;
-
+	new_h->size = old_size;
+	#ifdef __LP64__
+	uint64_t* new_hash = malloc(new_capacity * sizeof(uint64_t));
+	memcpy(new_hash, old_hash, old_capacity * sizeof(uint64_t));
+	#else
+	uint32_t* new_hash = malloc(new_capacity * sizeof(uint32_t));
+	memcpy(new_hash, old_hash, old_capacity * sizeof(uint32_t));
+	#endif
+	
+	free(old_hash);
+	free(h->_hash);
+	
+	new_h->_hash = new_hash;
+	
 	return new_h;
 }
 
@@ -70,18 +105,30 @@ bool set_has_space(set_header* h) {
 	return h->capacity - h->size > 0;
 }
 
-bool set_contains(set* set_addr, unsigned char value) {
+pack set_contains(set* set_addr, unsigned char value) {
         set_header* h = set_get_header(*set_addr);
+        
+        #ifdef __LP64__
+        uint64_t value_hash = _default_hash(&value);
+        #else
+        uint32_t value_hash = _default_hash(&value);
+        #endif
+        
+        /*     DEPRECATED
         for (int i = 0; i != set_size(&h->data); i++) {
                 if (h->data[i] == value) {
                         return true;
                 }
                 //printf("%hhu %hhu\n", h->data[i], value);
         }
-        return false;
+        */
+        
+        pack result = binsearch_array(h, value_hash);
+        
+        return result;
 }
 
-void* _set_add_dst(set* set_addr, set_type_t type_size) {
+/*void* _set_add_dst(set* set_addr, set_type_t type_size) {
 	set_header* h = set_get_header(*set_addr);
 
 	if (!set_has_space(h)) {
@@ -90,7 +137,7 @@ void* _set_add_dst(set* set_addr, set_type_t type_size) {
 	}
 
 	return &h->data[type_size * h->size++];
-}
+}*/
 
 void* _set_insert_dst(set* set_addr, set_type_t type_size, set_size_t pos) {
 	set_header* h = set_get_header(*set_addr);
@@ -110,6 +157,21 @@ void* _set_insert_dst(set* set_addr, set_type_t type_size, set_size_t pos) {
 	h->size = new_length;
 
 	return &h->data[pos * type_size];
+}
+
+void _hash_add(set* set_addr, unsigned char value, set_size_t pos) {
+        set_header* h = set_get_header(*set_addr);
+        #ifdef __LP64__
+        uint64_t value_hash = _default_hash(&value);
+        #else
+        uint32_t value_hash = _default_hash(&value);
+        #endif
+        
+        memmove(&h->_hash[(pos + 1) * sizeof(value_hash)],
+	        &h->_hash[pos * sizeof(value_hash)],
+	        (h->size - pos) * sizeof(value_hash));
+	
+        h->_hash[pos * sizeof(value_hash)] = value_hash;
 }
 
 void _set_erase(set st, set_type_t type_size, set_size_t pos, set_size_t len) {
@@ -146,4 +208,66 @@ set _set_copy(set st, set_type_t type_size) {
 	copy_h->capacity = copy_h->size;
 
 	return &copy_h->data;
+}
+
+// FNV-1a hash (http://www.isthe.com/chongo/tech/comp/fnv/)
+#ifdef __LP64__
+uint64_t _default_hash(unsigned char *value) {
+    size_t i, len = strlen(value);
+    uint64_t h = 14695981039346656037ULL; // FNV_OFFSET 64 bit
+    for (i = 0; i < len; ++i) {
+        h = h ^ value[i];
+        h = h * 1099511628211ULL; // FNV_PRIME 64 bit
+    }
+    return h;
+}
+#else
+uint32_t _default_hash(unsigned char *value) {
+    size_t i, len = strlen(value);
+    uint32_t h = 2166136261; // FNV_OFFSET 32 bit
+    for (i = 0; i < len; ++i) {
+        h = h ^ value[i];
+        h = h * 16777619; // FNV_PRIME 32 bit
+    }
+    return h;
+}
+#endif
+
+#ifdef __LP64__
+pack binsearch_array(set_header* h, uint64_t value) {
+#else
+pack binsearch_array(set_header* h, uint32_t value) {
+#endif
+    #ifdef __LP64__
+    uint64_t *a = h->_hash;
+    uint64_t l = 0, r = (h->capacity != 0) ? h->capacity : 0; 
+    uint64_t m;
+    #else
+    uint32_t *a = h->_hash;
+    uint32_t l = 0, r = (h->capacity != 0) ? h->capacity : 0;
+    uint32_t m;
+    #endif
+    
+    pack result;
+    
+    while (r > l) {
+        m = (l + r) / 2;
+
+        if (a[m] < value) {
+            l = m + 1;
+        } else if (a[m] > value) {
+            r = m - 1;
+        } else {
+            result.code = true;
+            result.index = m;
+            return result;
+        }
+    }
+    result.index = l;
+    if (a[l] == value) {
+        result.code = true;
+    } else {
+        result.code = false;
+    }
+    return result;
 }
